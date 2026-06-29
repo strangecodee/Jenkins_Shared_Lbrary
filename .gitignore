@@ -1,0 +1,4 @@
+# OS/IDE temporary files
+.idea/
+.vscode/
+.DS_Store
