@@ -8,7 +8,7 @@ def call(Map config = [:]) {
     echo "Preparing Ansible environment inside: ${directory}"
     dir(directory) {
         echo "Installing Ansible dependencies..."
-        sh 'pip install --user boto3 botocore ansible-core'
+        sh 'pip install --user boto3 botocore ansible-core --break-system-packages'
 
         echo "Installing Ansible collections..."
         sh 'ansible-galaxy collection install amazon.aws ansible.posix community.general'
