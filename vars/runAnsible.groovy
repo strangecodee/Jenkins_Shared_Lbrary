@@ -20,9 +20,9 @@ def call(Map config = [:]) {
         withCredentials([file(credentialsId: credentialsId, variable: 'SSH_KEY_FILE')]) {
             sh """
             ansible-playbook -i inventory/aws_ec2.yml site.yml \
-                -e bastion_ip=${bastionIp} \
-                -e grafana_efs_file_system_id=${efsId} \
-                -e ansible_ssh_private_key_file=${SSH_KEY_FILE}
+                -e 'bastion_ip=${bastionIp}' \
+                -e 'grafana_efs_file_system_id=${efsId}' \
+                -e 'ansible_ssh_private_key_file=${SSH_KEY_FILE}'
             """
         }
     }
