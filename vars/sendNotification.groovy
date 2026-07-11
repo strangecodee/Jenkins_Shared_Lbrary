@@ -366,36 +366,44 @@ def call(Map params = [:]) {
 @NonCPS
 def parseBody(String body) {
     def envName = "N/A"
-    def envMatcher = body =~ /(?i)Environment:\s*([^\s\n]+)/
+    def envMatcher = java.util.regex.Pattern.compile("(?i)Environment:\\s*([^\\s\\n]+)").matcher(body)
     if (envMatcher.find()) { envName = envMatcher.group(1).trim() }
 
     def actionName = "N/A"
-    def actionMatcher = body =~ /(?i)Action:\s*([^\s\n]+)/
+    def actionMatcher = java.util.regex.Pattern.compile("(?i)Action:\\s*([^\\s\\n]+)").matcher(body)
     if (actionMatcher.find()) { actionName = actionMatcher.group(1).trim() }
 
     def bastionIp = "N/A"
-    def bastionMatcher = body =~ /(?i)Bastion (Host IP|IP):\s*([^\s\n]+)/
+    def bastionMatcher = java.util.regex.Pattern.compile("(?i)Bastion (Host IP|IP):\\s*([^\\s\\n]+)").matcher(body)
     if (bastionMatcher.find()) { bastionIp = bastionMatcher.group(2).trim() }
 
     def efsId = "N/A"
-    def efsMatcher = body =~ /(?i)EFS (File System ID|ID):\s*([^\s\n]+)/
+    def efsMatcher = java.util.regex.Pattern.compile("(?i)EFS (File System ID|ID):\\s*([^\\s\\n]+)").matcher(body)
     if (efsMatcher.find()) { efsId = efsMatcher.group(2).trim() }
 
     def grafanaUrl = ""
-    def grafanaMatcher = body =~ /(?i)Grafana Portal:\s*(http[s]?:\/\/[^\s\n]+)/
+    def grafanaMatcher = java.util.regex.Pattern.compile("(?i)Grafana Portal:\\s*(http[s]?:\\/\\/[^\\s\\n]+)").matcher(body)
     if (grafanaMatcher.find()) { grafanaUrl = grafanaMatcher.group(1).trim() }
 
-    return [
+    def result = [
         envName: envName,
         actionName: actionName,
         bastionIp: bastionIp,
         efsId: efsId,
         grafanaUrl: grafanaUrl
     ]
+
+    // Explicitly clean up matchers to prevent any reference retention
+    envMatcher = null
+    actionMatcher = null
+    bastionMatcher = null
+    efsMatcher = null
+    grafanaMatcher = null
+
+    return result
 }
 
 @NonCPS
 def isValidEmail(String email) {
-    def emailPattern = ~/^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,})$/
-    return (email =~ emailPattern).matches()
+    return email.matches('^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\\.([a-zA-Z]{2,})$')
 }
