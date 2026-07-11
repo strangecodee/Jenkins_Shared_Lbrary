@@ -34,7 +34,7 @@ def call(Map params = [:]) {
     def headerClass = (status == 'SUCCESS') ? 'success' : 'failure'
     def slackColor = (status == 'SUCCESS') ? '#10b981' : '#ef4444'
     def slackHeaderEmoji = (status == 'SUCCESS') ? '✅' : '❌'
-    def subjectTitle = (status == 'SUCCESS') ? 'Deployment Completed Successfully' : 'Deployment Failed'
+    def subjectTitle = (status == 'SUCCESS') ? 'Build Successful' : 'Build Failed'
 
     // Build Grafana button if URL exists
     def grafanaBtnHtml = ""
@@ -198,7 +198,7 @@ def call(Map params = [:]) {
       <div class="content">
         <div class="status-badge ${statusClass}">${status}</div>
         <div class="intro">
-          The observability monitoring infrastructure pipeline execution completed with a status of <strong>${status}</strong>. Please find the deployment summary and control actions below.
+          Hi team, build #${buildNumber} completed with status <strong>${status}</strong>. Here is the summary:
         </div>
         
         <div class="section-title">Deployment Configuration</div>
@@ -235,7 +235,7 @@ def call(Map params = [:]) {
         </div>
       </div>
       <div class="footer">
-        This is an automated notification. If you have questions about this build, please refer to the <a href="${buildUrl}">Jenkins execution output</a>.
+        Automated alert from Jenkins. Build logs: <a href="${buildUrl}">${buildUrl}</a>
       </div>
     </div>
   </div>
@@ -315,7 +315,7 @@ def call(Map params = [:]) {
                                         "type": "section",
                                         "text": {
                                             "type": "mrkdwn",
-                                            "text": "*Observability Stack Execution Run*\\nPipeline run details for Job *${jobName}*."
+                                            "text": "Hi team, build *#${buildNumber}* of *${jobName}* finished with status *${status}*."
                                         }
                                     },
                                     {
