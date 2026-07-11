@@ -1,3 +1,5 @@
+import com.cloudbees.groovy.cps.NonCPS
+
 def call(Map params = [:]) {
     def status = params.get('status', 'SUCCESS')
     def email = params.get('email', '').trim()
@@ -8,26 +10,13 @@ def call(Map params = [:]) {
     def subject = params.get('subject', "${status}: Jenkins Job '${jobName}' [Build #${buildNumber}]")
     def body = params.get('body', '')
 
-    // Extract dynamic variables from the pipeline body text
-    def envName = "N/A"
-    def envMatcher = body =~ /(?i)Environment:\s*([^\s\n]+)/
-    if (envMatcher.find()) { envName = envMatcher.group(1).trim() }
-
-    def actionName = "N/A"
-    def actionMatcher = body =~ /(?i)Action:\s*([^\s\n]+)/
-    if (actionMatcher.find()) { actionName = actionMatcher.group(1).trim() }
-
-    def bastionIp = "N/A"
-    def bastionMatcher = body =~ /(?i)Bastion (Host IP|IP):\s*([^\s\n]+)/
-    if (bastionMatcher.find()) { bastionIp = bastionMatcher.group(2).trim() }
-
-    def efsId = "N/A"
-    def efsMatcher = body =~ /(?i)EFS (File System ID|ID):\s*([^\s\n]+)/
-    if (efsMatcher.find()) { efsId = efsMatcher.group(2).trim() }
-
-    def grafanaUrl = ""
-    def grafanaMatcher = body =~ /(?i)Grafana Portal:\s*(http[s]?:\/\/[^\s\n]+)/
-    if (grafanaMatcher.find()) { grafanaUrl = grafanaMatcher.group(1).trim() }
+    // Extract dynamic variables from the pipeline body text using NonCPS method
+    def parsedInfo = parseBody(body)
+    def envName = parsedInfo.envName
+    def actionName = parsedInfo.actionName
+    def bastionIp = parsedInfo.bastionIp
+    def efsId = parsedInfo.efsId
+    def grafanaUrl = parsedInfo.grafanaUrl
 
     // Setup Colors
     def statusClass = (status == 'SUCCESS') ? 'success' : 'failure'
@@ -245,8 +234,7 @@ def call(Map params = [:]) {
 
     // Email Dispatch Block
     if (email) {
-        def emailPattern = ~/^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,})$/
-        if (email =~ emailPattern) {
+        if (isValidEmail(email)) {
             try {
                 echo "Sending ${status} notification email to ${email}..."
                 mail to: email,
@@ -373,4 +361,41 @@ def call(Map params = [:]) {
     } catch (Exception e) {
         echo "WARNING: Failed to send Slack notification. Error: ${e.getMessage()}"
     }
+}
+
+@NonCPS
+def parseBody(String body) {
+    def envName = "N/A"
+    def envMatcher = body =~ /(?i)Environment:\s*([^\s\n]+)/
+    if (envMatcher.find()) { envName = envMatcher.group(1).trim() }
+
+    def actionName = "N/A"
+    def actionMatcher = body =~ /(?i)Action:\s*([^\s\n]+)/
+    if (actionMatcher.find()) { actionName = actionMatcher.group(1).trim() }
+
+    def bastionIp = "N/A"
+    def bastionMatcher = body =~ /(?i)Bastion (Host IP|IP):\s*([^\s\n]+)/
+    if (bastionMatcher.find()) { bastionIp = bastionMatcher.group(2).trim() }
+
+    def efsId = "N/A"
+    def efsMatcher = body =~ /(?i)EFS (File System ID|ID):\s*([^\s\n]+)/
+    if (efsMatcher.find()) { efsId = efsMatcher.group(2).trim() }
+
+    def grafanaUrl = ""
+    def grafanaMatcher = body =~ /(?i)Grafana Portal:\s*(http[s]?:\/\/[^\s\n]+)/
+    if (grafanaMatcher.find()) { grafanaUrl = grafanaMatcher.group(1).trim() }
+
+    return [
+        envName: envName,
+        actionName: actionName,
+        bastionIp: bastionIp,
+        efsId: efsId,
+        grafanaUrl: grafanaUrl
+    ]
+}
+
+@NonCPS
+def isValidEmail(String email) {
+    def emailPattern = ~/^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,})$/
+    return (email =~ emailPattern).matches()
 }
